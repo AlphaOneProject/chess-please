@@ -1,4 +1,6 @@
 function main(event) {
+    var selected_cell = null;
+
     function getMoves() {
         let moves = [];
         // Compute possible moves.
@@ -7,16 +9,30 @@ function main(event) {
     }
 
     function handleClick() {
-        if (this.classList.contains("possible")) {
-            // Moves the piece to this cell.
-            // WIP.
-        }
         cells.forEach((cell) => {
             if (cell == this) return;
             cell.classList.remove("selected");
             cell.classList.remove("possible");
         });
+
+        if (
+            selected_cell &&
+            (this.classList.contains("possible") ||
+                selected_cell.firstElementChild)
+        ) {
+            // Moves the piece to this cell.
+            let p1 = selected_cell.firstElementChild;
+            selected_cell.removeChild(p1);
+            if (this.firstElementChild)
+                this.removeChild(this.firstElementChild);
+            this.appendChild(p1);
+            selected_cell = null;
+            this.classList.remove("selected");
+            return;
+        }
+
         this.classList.toggle("selected");
+        selected_cell = this;
 
         // If the cell contains a piece.
         if (this.firstElementChild) {

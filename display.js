@@ -2,7 +2,7 @@ const fs = require("fs");
 const http = require("http");
 var path = require("path");
 
-const board = require("./board.js");
+const ChessGame = require("./board.js");
 
 const MIME = {
     html: "text/html",
@@ -16,18 +16,18 @@ const MIME = {
 };
 const IMG_PATH = "pieces/";
 const CHAR_TO_IMG = {
-    p: "p1",
-    c: "c1",
-    f: "f1",
-    t: "t1",
-    e: "e1",
-    r: "r1",
     P: "p0",
-    C: "c0",
-    F: "f0",
-    T: "t0",
-    E: "e0",
+    N: "n0",
+    B: "b0",
     R: "r0",
+    Q: "q0",
+    K: "k0",
+    p: "p1",
+    n: "n1",
+    b: "b1",
+    r: "r1",
+    q: "q1",
+    k: "k1",
 };
 
 function getHtmlFromPos(pos) {
@@ -63,7 +63,7 @@ const requestListener = function (req, res) {
     let url = req.url;
     if (url == "/") {
         res.writeHead(200);
-        res.write(getHtmlFromPos(board.cur_pos));
+        res.write(getHtmlFromPos(game.pos));
         res.end();
     } else if (
         url.startsWith("/pieces/") ||
@@ -100,5 +100,6 @@ const requestListener = function (req, res) {
     }
 };
 
+var game = new ChessGame();
 const server = http.createServer(requestListener);
 server.listen(8080);
