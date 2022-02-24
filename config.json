@@ -1,0 +1,7 @@
+{
+    "prefix": "%",
+    "restart_delay": {
+        "value": 1,
+        "unit": "d"
+    }
+}

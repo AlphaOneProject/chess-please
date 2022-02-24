@@ -1,0 +1,8 @@
+auth.json
+package-lock.json
+node_modules/
+debug/
+stats/
+tmp/
+
+*.code-workspace

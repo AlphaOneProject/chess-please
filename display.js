@@ -1,0 +1,104 @@
+const fs = require("fs");
+const http = require("http");
+var path = require("path");
+
+const board = require("./board.js");
+
+const MIME = {
+    html: "text/html",
+    txt: "text/plain",
+    css: "text/css",
+    gif: "image/gif",
+    jpg: "image/jpeg",
+    png: "image/png",
+    svg: "image/svg+xml",
+    js: "application/javascript",
+};
+const IMG_PATH = "pieces/";
+const CHAR_TO_IMG = {
+    p: "p1",
+    c: "c1",
+    f: "f1",
+    t: "t1",
+    e: "e1",
+    r: "r1",
+    P: "p0",
+    C: "c0",
+    F: "f0",
+    T: "t0",
+    E: "e0",
+    R: "r0",
+};
+
+function getHtmlFromPos(pos) {
+    // Changes the POV of the board.
+    //pos = pos.split("").reverse().join("");
+    let html = fs.readFileSync("./html/base.html");
+    let color = "white";
+    for (var i = 0; i < pos.length; i++) {
+        if (i % 8 != 0) {
+            if (color == "white") color = "black";
+            else color = "white";
+        }
+        if (pos.charAt(i) == "-") {
+            html += "<div class='cell " + color + "'></div>";
+            continue;
+        }
+        html +=
+            "<div class='cell " +
+            color +
+            "'><img draggable='false' src='" +
+            IMG_PATH +
+            CHAR_TO_IMG[pos.charAt(i)] +
+            ".png'";
+        if (pos.charAt(i).toLowerCase() == "p")
+            html += " style='max-height: 85%;'";
+        else html += " style='max-height: 90%;'";
+        html += "></div>";
+    }
+    return html + "</div></div></body></html>";
+}
+
+const requestListener = function (req, res) {
+    let url = req.url;
+    if (url == "/") {
+        res.writeHead(200);
+        res.write(getHtmlFromPos(board.cur_pos));
+        res.end();
+    } else if (
+        url.startsWith("/pieces/") ||
+        url.startsWith("/css/") ||
+        url.startsWith("/js/")
+    ) {
+        var reqpath = req.url.toString().split("?")[0];
+        if (req.method !== "GET") {
+            res.statusCode = 501;
+            res.setHeader("Content-Type", "text/plain");
+            return res.end("Method not implemented");
+        }
+        var file = path.join(__dirname, reqpath);
+        if (file.indexOf(__dirname + path.sep) !== 0) {
+            res.statusCode = 403;
+            res.setHeader("Content-Type", "text/plain");
+            return res.end("Forbidden");
+        }
+        var type = MIME[path.extname(file).slice(1)] || "text/plain";
+        var s = fs.createReadStream(file);
+        s.on("open", function () {
+            res.setHeader("Content-Type", type);
+            s.pipe(res);
+        });
+        s.on("error", function () {
+            res.setHeader("Content-Type", "text/plain");
+            res.statusCode = 404;
+            res.end("Not found");
+        });
+    } else {
+        res.setHeader("Content-Type", "text/plain");
+        res.statusCode = 404;
+        res.end("Not found");
+    }
+};
+
+const server = http.createServer(requestListener);
+server.listen(8080);
