@@ -65,11 +65,23 @@ module.exports = class ChessGame {
         )
             return;
         if (check_proxi) {
+            let cur_cell = [~~(i / 8), i % 8];
+            let new_cell = [~~(j / 8), j % 8];
             let proximity = false;
             let found = false;
             moves.forEach((move) => {
                 if (move[0] != i) return;
-                if (move[1] + 9 >= i && i >= move[1] - 9) proximity = true;
+                let prev_cell = [~~(move[1] / 8), move[1] % 8];
+                if (
+                    Math.abs(cur_cell[0] - new_cell[0]) <= 1 &&
+                    Math.abs(cur_cell[1] - new_cell[1]) <= 1
+                )
+                    proximity = true;
+                if (
+                    Math.abs(prev_cell[0] - new_cell[0]) <= 1 &&
+                    Math.abs(prev_cell[1] - new_cell[1]) <= 1
+                )
+                    proximity = true;
                 found = true;
             });
             if (!proximity && found) return;
@@ -93,8 +105,9 @@ module.exports = class ChessGame {
                     // Advance on empty cases.
                     this.addIfIsEmpty(moves, i, i + -8 * this.direction);
                     if (
-                        (this.white_to_play && i > 47 && i < 56) ||
-                        (!this.white_to_play && i > 7 && i < 16)
+                        ((this.white_to_play && i > 47 && i < 56) ||
+                            (!this.white_to_play && i > 7 && i < 16)) &&
+                        this.pos.charAt(i + -8 * this.direction) == "-"
                     )
                         this.addIfIsEmpty(moves, i, i + -16 * this.direction);
                     // Eat enemy piece.
@@ -114,8 +127,15 @@ module.exports = class ChessGame {
                     }
                     break;
                 case "n":
+                    let cur_cell = [~~(i / 8), i % 8];
                     [-17, -15, -10, -6, 6, 10, 15, 17].forEach((val) => {
-                        this.addMove(moves, i, i + val, false);
+                        let new_cell = [~~((i + val) / 8), (i + val) % 8];
+                        if (
+                            Math.abs(new_cell[0] - cur_cell[0]) +
+                                Math.abs(new_cell[1] - cur_cell[1]) ==
+                            3
+                        )
+                            this.addMove(moves, i, i + val, false);
                     });
                     break;
                 case "b":
@@ -138,13 +158,17 @@ module.exports = class ChessGame {
                         let cases = 1;
                         let prev = i % 8;
                         while (
-                            [-1, 1].includes(prev - ((i + val * cases) % 8)) &&
+                            ([-1, 1].includes(prev - ((i + val * cases) % 8)) ||
+                                Math.abs(val) == 8) &&
                             this.addIfIsEmpty(moves, i, i + val * cases)
                         ) {
                             prev = (i + val * cases) % 8;
                             cases++;
                         }
-                        if ([-1, 1].includes(prev - ((i + val * cases) % 8)))
+                        if (
+                            [-1, 1].includes(prev - ((i + val * cases) % 8)) ||
+                            Math.abs(val) == 8
+                        )
                             this.addIfIsEnemy(moves, i, i + val * cases);
                     });
                     break;
@@ -153,13 +177,17 @@ module.exports = class ChessGame {
                         let cases = 1;
                         let prev = i % 8;
                         while (
-                            [-1, 1].includes(prev - ((i + val * cases) % 8)) &&
+                            ([-1, 1].includes(prev - ((i + val * cases) % 8)) ||
+                                Math.abs(val) == 8) &&
                             this.addIfIsEmpty(moves, i, i + val * cases)
                         ) {
                             prev = (i + val * cases) % 8;
                             cases++;
                         }
-                        if ([-1, 1].includes(prev - ((i + val * cases) % 8)))
+                        if (
+                            [-1, 1].includes(prev - ((i + val * cases) % 8)) ||
+                            Math.abs(val) == 8
+                        )
                             this.addIfIsEnemy(moves, i, i + val * cases);
                     });
                     break;
