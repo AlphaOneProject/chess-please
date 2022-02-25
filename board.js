@@ -70,7 +70,6 @@ module.exports = class ChessGame {
             moves.forEach((move) => {
                 if (move[0] != i) return;
                 if (move[1] + 9 >= i && i >= move[1] - 9) proximity = true;
-                //if () proximity = true;
                 found = true;
             });
             if (!proximity && found) return;
@@ -122,28 +121,46 @@ module.exports = class ChessGame {
                 case "b":
                     [-9, -7, 7, 9].forEach((val) => {
                         let cases = 1;
-                        while (this.addIfIsEmpty(moves, i, i + val * cases)) {
+                        let prev = i % 8;
+                        while (
+                            [-1, 1].includes(prev - ((i + val * cases) % 8)) &&
+                            this.addIfIsEmpty(moves, i, i + val * cases)
+                        ) {
+                            prev = (i + val * cases) % 8;
                             cases++;
                         }
-                        this.addIfIsEnemy(moves, i, i + val * cases);
+                        if ([-1, 1].includes(prev - ((i + val * cases) % 8)))
+                            this.addIfIsEnemy(moves, i, i + val * cases);
                     });
                     break;
                 case "r":
                     [-8, -1, 1, 8].forEach((val) => {
                         let cases = 1;
-                        while (this.addIfIsEmpty(moves, i, i + val * cases)) {
+                        let prev = i % 8;
+                        while (
+                            [-1, 1].includes(prev - ((i + val * cases) % 8)) &&
+                            this.addIfIsEmpty(moves, i, i + val * cases)
+                        ) {
+                            prev = (i + val * cases) % 8;
                             cases++;
                         }
-                        this.addIfIsEnemy(moves, i, i + val * cases);
+                        if ([-1, 1].includes(prev - ((i + val * cases) % 8)))
+                            this.addIfIsEnemy(moves, i, i + val * cases);
                     });
                     break;
                 case "q":
                     [-9, -8, -7, -1, 1, 7, 8, 9].forEach((val) => {
                         let cases = 1;
-                        while (this.addIfIsEmpty(moves, i, i + val * cases)) {
+                        let prev = i % 8;
+                        while (
+                            [-1, 1].includes(prev - ((i + val * cases) % 8)) &&
+                            this.addIfIsEmpty(moves, i, i + val * cases)
+                        ) {
+                            prev = (i + val * cases) % 8;
                             cases++;
                         }
-                        this.addIfIsEnemy(moves, i, i + val * cases);
+                        if ([-1, 1].includes(prev - ((i + val * cases) % 8)))
+                            this.addIfIsEnemy(moves, i, i + val * cases);
                     });
                     break;
                 case "k":
