@@ -60,11 +60,34 @@ function getHtmlFromPos(pos) {
 }
 
 const requestListener = function (req, res) {
+    function notFound() {
+        res.setHeader("Content-Type", "text/plain");
+        res.statusCode = 404;
+        res.end("Not found");
+    }
+
     let url = req.url;
     if (url == "/") {
         res.writeHead(200);
         res.write(getHtmlFromPos(game.pos));
         res.end();
+    } else if (url.startsWith("/api")) {
+        let action = req.url.toString().split("?action=")[1].split("&")[0];
+        if (action == "getMoves") {
+            res.setHeader("Content-Type", "text/plain");
+            let moves = game.getValidMoves().join(";");
+            res.end(moves);
+        } else if (action == "sendMove") {
+            let move = req.url
+                .toString()
+                .split("&move=")[1]
+                .split("&")[0]
+                .split(",");
+            let result = game.registerMove(move);
+            console.log("Moved: " + move + " (" + result + ")");
+            res.writeHead(200);
+            res.end();
+        } else notFound();
     } else if (
         url.startsWith("/pieces/") ||
         url.startsWith("/css/") ||
@@ -89,14 +112,10 @@ const requestListener = function (req, res) {
             s.pipe(res);
         });
         s.on("error", function () {
-            res.setHeader("Content-Type", "text/plain");
-            res.statusCode = 404;
-            res.end("Not found");
+            notFound();
         });
     } else {
-        res.setHeader("Content-Type", "text/plain");
-        res.statusCode = 404;
-        res.end("Not found");
+        notFound();
     }
 };
 
