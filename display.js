@@ -30,10 +30,11 @@ const CHAR_TO_IMG = {
     k: "k1",
 };
 
-function getHtmlFromPos(pos) {
+function getHtmlFromPos(pos, board_only = false) {
     // Changes the POV of the board.
     //pos = pos.split("").reverse().join("");
-    let html = fs.readFileSync("./html/base.html");
+    let html = "";
+    if (!board_only) html = fs.readFileSync("./html/base.html");
     let color = "white";
     for (var i = 0; i < pos.length; i++) {
         if (i % 8 != 0) {
@@ -56,7 +57,8 @@ function getHtmlFromPos(pos) {
         else html += " style='max-height: 90%;'";
         html += "></div>";
     }
-    return html + "</div></div></body></html>";
+    if (!board_only) html += "</div></div></body></html>";
+    return html;
 }
 
 const requestListener = function (req, res) {
@@ -67,27 +69,33 @@ const requestListener = function (req, res) {
     }
 
     let url = req.url;
-    if (url == "/") {
+    if (url.split("?")[0] == "/") {
+        if (!req.url.toString().includes("id=")) {
+            return;
+        }
+        let id = req.url.toString().split("id=")[1].split("&")[0];
         res.writeHead(200);
-        res.write(getHtmlFromPos(game.pos));
+        if (!games[id]) games[id] = new ChessGame();
+        res.write(getHtmlFromPos(games[id].pos));
         res.end();
     } else if (url.startsWith("/api")) {
-        let action = req.url.toString().split("?action=")[1].split("&")[0];
+        let id = req.url.toString().split("id=")[1].split("&")[0];
+        let action = req.url.toString().split("action=")[1].split("&")[0];
         if (action == "getMoves") {
             res.setHeader("Content-Type", "text/plain");
-            let moves = game.getValidMoves().join(";");
+            let moves = games[id].getValidMoves().join(";");
             res.end(moves);
         } else if (action == "sendMove") {
             let move = req.url
                 .toString()
-                .split("&move=")[1]
+                .split("move=")[1]
                 .split("&")[0]
                 .split(",");
             move = [parseInt(move[0]), parseInt(move[1])];
-            let result = game.registerMove(move);
+            let result = games[id].registerMove(move);
             console.log("Moved: " + move + " (" + result + ")");
             res.writeHead(200);
-            if (result) res.end("1");
+            if (result) res.end(getHtmlFromPos(games[id].pos, true));
             else res.end("0");
         } else notFound();
     } else if (
@@ -121,6 +129,6 @@ const requestListener = function (req, res) {
     }
 };
 
-var game = new ChessGame();
+var games = {};
 const server = http.createServer(requestListener);
 server.listen(8080);

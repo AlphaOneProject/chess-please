@@ -67,7 +67,7 @@ function main(event) {
         }
         let tmp = null;
         // Get possible moves computed server-side.
-        var url = "api?action=getMoves";
+        var url = "api" + window.location.search + "&action=getMoves";
         var xhr = new XMLHttpRequest();
         xhr.open("GET", url);
         xhr.onreadystatechange = function () {
@@ -113,13 +113,22 @@ function main(event) {
             // Register the move server-side.
             if (selected_index == c_index) return;
             var url =
-                "api?action=sendMove&move=" + selected_index + "," + c_index;
+                "api" +
+                window.location.search +
+                "&action=sendMove&move=" +
+                selected_index +
+                "," +
+                c_index;
             var xhr = new XMLHttpRequest();
             xhr.open("GET", url);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4) {
-                    if (xhr.responseText == "1") {
-                        location.reload();
+                    if (xhr.responseText != "0") {
+                        board.innerHTML = xhr.responseText;
+                        cells = document.querySelectorAll(".cell");
+                        cells.forEach(function (cell) {
+                            cell.addEventListener("click", handleClick);
+                        });
                     }
                     return;
                 }
@@ -139,7 +148,7 @@ function main(event) {
             getMoves(c_index);
         }
     }
-    let pieces = document.querySelectorAll(".cell img");
+    let board = document.querySelectorAll("#board")[0];
     let cells = document.querySelectorAll(".cell");
     cells.forEach(function (cell) {
         cell.addEventListener("click", handleClick);
