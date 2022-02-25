@@ -83,10 +83,12 @@ const requestListener = function (req, res) {
                 .split("&move=")[1]
                 .split("&")[0]
                 .split(",");
+            move = [parseInt(move[0]), parseInt(move[1])];
             let result = game.registerMove(move);
             console.log("Moved: " + move + " (" + result + ")");
             res.writeHead(200);
-            res.end();
+            if (result) res.end("1");
+            else res.end("0");
         } else notFound();
     } else if (
         url.startsWith("/pieces/") ||

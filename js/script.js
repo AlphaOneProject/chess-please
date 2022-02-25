@@ -118,6 +118,9 @@ function main(event) {
             xhr.open("GET", url);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4) {
+                    if (xhr.responseText == "1") {
+                        location.reload();
+                    }
                     return;
                 }
             };

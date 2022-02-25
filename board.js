@@ -115,15 +115,16 @@ module.exports = class ChessGame {
                     this.addIfIsEnemy(moves, i, i + -9 * this.direction);
                     // En passant.
                     if (this.moves_played.length == 0) break;
-                    let last_move = this.moves_played.slice(-1);
+                    let last_move = this.moves_played.slice(-1)[0];
                     if (
                         this.pos.charAt(last_move[1]).toLowerCase() == "p" &&
                         last_move[0] - last_move[1] == -16 * this.direction
                     ) {
-                        if (last_move[1] == i - 1)
+                        if (last_move[1] == i - this.direction) {
                             this.addMove(moves, i, i + -9 * this.direction);
-                        else if (last_move[1] == i + 1)
+                        } else if (last_move[1] == i + this.direction) {
                             this.addMove(moves, i, i + -7 * this.direction);
+                        }
                     }
                     break;
                 case "n":
@@ -219,6 +220,7 @@ module.exports = class ChessGame {
     }
 
     registerMove(move) {
+        let need_reload = false;
         function replaceAt(str, index, replacement) {
             let out = "";
             for (var i = 0; i < str.length; i++) {
@@ -233,33 +235,37 @@ module.exports = class ChessGame {
         v_moves.forEach((val) => {
             if (val[0] == move[0] && val[1] == move[1]) isValid = true;
         });
-        if (!isValid) return false;
+        if (!isValid) return true;
         let piece = this.pos.charAt(move[0]);
         // En passant.
         if (piece.toLowerCase() == "p" && this.pos.charAt(move[1]) == "-") {
-            if (move[0] - move[1] == -7 * this.direction) {
+            if (move[1] - move[0] == -7 * this.direction) {
                 this.pos = replaceAt(
                     this.pos,
                     move[0] + 1 * this.direction,
                     "-"
                 );
-            } else if (move[0] - move[1] == -9 * this.direction) {
+                need_reload = true;
+            } else if (move[1] - move[0] == -9 * this.direction) {
                 this.pos = replaceAt(
                     this.pos,
                     move[0] + -1 * this.direction,
                     "-"
                 );
+                need_reload = true;
             }
         }
         // Castling.
         // WIP.
+        // Move the piece.
         this.pos = replaceAt(this.pos, move[0], "-");
         this.pos = replaceAt(this.pos, move[1], piece);
+        // Prepare next move.
         this.moves_played.push(move);
         this.white_to_play = !this.white_to_play;
         this.direction = -this.direction;
         this._valid_moves = [];
-        return true;
+        return need_reload;
     }
 
     evalPos = function () {
