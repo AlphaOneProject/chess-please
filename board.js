@@ -51,7 +51,10 @@ module.exports = class ChessGame {
         copy.moves_played = Object.assign([], this.moves_played);
         copy.white_to_play = this.white_to_play;
         copy.direction = this.direction;
-        copy.castling = Object.assign({}, this.castling);
+        copy.castling = [
+            Object.assign([], this.castling[0]),
+            Object.assign([], this.castling[1]),
+        ];
         copy._valid_moves = Object.assign([], this._valid_moves);
         return copy;
     }
@@ -305,6 +308,22 @@ module.exports = class ChessGame {
                 if (next_move_board.pos.charAt(m[1]).toLowerCase() == "k")
                     eat_king = true;
             });
+            // Check for castling checks.
+            if (
+                game_pos.charAt(move[0]).toLowerCase() == "k" &&
+                Math.abs(move[0] - move[1]) == 2
+            ) {
+                next_move_board = this.copy();
+                next_move_board.registerMove(move, true);
+                next_move_board.getAllMoves().forEach((m) => {
+                    if (
+                        [0, 1, 2].includes(
+                            (move[0] - m[1]) * (move[0] - move[1] > 0 ? 1 : -1)
+                        )
+                    )
+                        eat_king = true;
+                });
+            }
             if (!eat_king) validMoves.push(move);
         });
         if (game_pos == this.pos) this._valid_moves = validMoves;
