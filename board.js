@@ -371,8 +371,24 @@ module.exports = class ChessGame {
                 need_reload = true;
             }
         }
-        // Castling.
+        if (
+            piece.toLowerCase() == "p" &&
+            ~~(move[1] / 8) == 0 &&
+            this.white_to_play
+        ) {
+            piece = "Q";
+            need_reload = true;
+        }
+        if (
+            piece.toLowerCase() == "p" &&
+            ~~(move[1] / 8) == 7 &&
+            !this.white_to_play
+        ) {
+            piece = "q";
+            need_reload = true;
+        }
         if (piece.toLowerCase() == "r") {
+            // Castling.
             if (move[0] % 8 == 7)
                 this.castling[this.white_to_play ? 0 : 1][0] = false;
             if (move[0] % 8 == 0)
