@@ -41,27 +41,39 @@ module.exports = class ChessGame {
         this._valid_moves = [];
     }
 
-    addIfIsEnemy(moves, i, j, check_proxi = true) {
+    copy() {
+        let copy = new ChessGame();
+        copy.pos = this.pos;
+        copy.id = this.id;
+        copy.moves_played = Object.assign([], this.moves_played);
+        copy.white_to_play = this.white_to_play;
+        copy.direction = this.direction;
+        copy.castling = Object.assign({}, this.castling);
+        copy._valid_moves = Object.assign([], this._valid_moves);
+        return copy;
+    }
+
+    addIfIsEnemy(game_pos = this.pos, moves, i, j, check_proxi = true) {
         let isEnemy = null;
         if (this.white_to_play)
-            isEnemy = black_pieces.includes(this.pos.charAt(j));
-        else isEnemy = white_pieces.includes(this.pos.charAt(j));
-        if (isEnemy) this.addMove(moves, i, j, check_proxi);
+            isEnemy = black_pieces.includes(game_pos.charAt(j));
+        else isEnemy = white_pieces.includes(game_pos.charAt(j));
+        if (isEnemy) this.addMove(game_pos, moves, i, j, check_proxi);
         return isEnemy;
     }
 
-    addIfIsEmpty(moves, i, j, check_proxi = true) {
-        let isEmpty = this.pos.charAt(j) == "-";
-        if (isEmpty) this.addMove(moves, i, j, check_proxi);
+    addIfIsEmpty(game_pos = this.pos, moves, i, j, check_proxi = true) {
+        let isEmpty = game_pos.charAt(j) == "-";
+        if (isEmpty) this.addMove(game_pos, moves, i, j, check_proxi);
         return isEmpty;
     }
 
-    addMove(moves, i, j, check_proxi = true) {
-        if (this.white_to_play && white_pieces.includes(this.pos.charAt(j)))
+    addMove(game_pos = this.pos, moves, i, j, check_proxi = true) {
+        if (this.white_to_play && white_pieces.includes(game_pos.charAt(j)))
             return;
         else if (
             !this.white_to_play &&
-            black_pieces.includes(this.pos.charAt(j))
+            black_pieces.includes(game_pos.charAt(j))
         )
             return;
         if (check_proxi) {
@@ -89,10 +101,10 @@ module.exports = class ChessGame {
         if (j >= 0 && j < 64) moves.push([i, j]);
     }
 
-    getAllMoves() {
+    getAllMoves(game_pos = this.pos) {
         let moves = [];
-        for (var i = 0; i < this.pos.length; i++) {
-            let piece = this.pos.charAt(i);
+        for (var i = 0; i < game_pos.length; i++) {
+            let piece = game_pos.charAt(i);
             if (piece == "-") continue;
             let piece_lc = piece.toLowerCase();
             if (
@@ -103,27 +115,57 @@ module.exports = class ChessGame {
             switch (piece_lc) {
                 case "p":
                     // Advance on empty cases.
-                    this.addIfIsEmpty(moves, i, i + -8 * this.direction);
+                    this.addIfIsEmpty(
+                        game_pos,
+                        moves,
+                        i,
+                        i + -8 * this.direction
+                    );
                     if (
                         ((this.white_to_play && i > 47 && i < 56) ||
                             (!this.white_to_play && i > 7 && i < 16)) &&
-                        this.pos.charAt(i + -8 * this.direction) == "-"
+                        game_pos.charAt(i + -8 * this.direction) == "-"
                     )
-                        this.addIfIsEmpty(moves, i, i + -16 * this.direction);
+                        this.addIfIsEmpty(
+                            game_pos,
+                            moves,
+                            i,
+                            i + -16 * this.direction
+                        );
                     // Eat enemy piece.
-                    this.addIfIsEnemy(moves, i, i + -7 * this.direction);
-                    this.addIfIsEnemy(moves, i, i + -9 * this.direction);
+                    this.addIfIsEnemy(
+                        game_pos,
+                        moves,
+                        i,
+                        i + -7 * this.direction
+                    );
+                    this.addIfIsEnemy(
+                        game_pos,
+                        moves,
+                        i,
+                        i + -9 * this.direction
+                    );
                     // En passant.
                     if (this.moves_played.length == 0) break;
                     let last_move = this.moves_played.slice(-1)[0];
                     if (
-                        this.pos.charAt(last_move[1]).toLowerCase() == "p" &&
+                        game_pos.charAt(last_move[1]).toLowerCase() == "p" &&
                         last_move[0] - last_move[1] == -16 * this.direction
                     ) {
                         if (last_move[1] == i - this.direction) {
-                            this.addMove(moves, i, i + -9 * this.direction);
+                            this.addMove(
+                                game_pos,
+                                moves,
+                                i,
+                                i + -9 * this.direction
+                            );
                         } else if (last_move[1] == i + this.direction) {
-                            this.addMove(moves, i, i + -7 * this.direction);
+                            this.addMove(
+                                game_pos,
+                                moves,
+                                i,
+                                i + -7 * this.direction
+                            );
                         }
                     }
                     break;
@@ -136,7 +178,7 @@ module.exports = class ChessGame {
                                 Math.abs(new_cell[1] - cur_cell[1]) ==
                             3
                         )
-                            this.addMove(moves, i, i + val, false);
+                            this.addMove(game_pos, moves, i, i + val, false);
                     });
                     break;
                 case "b":
@@ -145,13 +187,23 @@ module.exports = class ChessGame {
                         let prev = i % 8;
                         while (
                             [-1, 1].includes(prev - ((i + val * cases) % 8)) &&
-                            this.addIfIsEmpty(moves, i, i + val * cases)
+                            this.addIfIsEmpty(
+                                game_pos,
+                                moves,
+                                i,
+                                i + val * cases
+                            )
                         ) {
                             prev = (i + val * cases) % 8;
                             cases++;
                         }
                         if ([-1, 1].includes(prev - ((i + val * cases) % 8)))
-                            this.addIfIsEnemy(moves, i, i + val * cases);
+                            this.addIfIsEnemy(
+                                game_pos,
+                                moves,
+                                i,
+                                i + val * cases
+                            );
                     });
                     break;
                 case "r":
@@ -161,7 +213,12 @@ module.exports = class ChessGame {
                         while (
                             ([-1, 1].includes(prev - ((i + val * cases) % 8)) ||
                                 Math.abs(val) == 8) &&
-                            this.addIfIsEmpty(moves, i, i + val * cases)
+                            this.addIfIsEmpty(
+                                game_pos,
+                                moves,
+                                i,
+                                i + val * cases
+                            )
                         ) {
                             prev = (i + val * cases) % 8;
                             cases++;
@@ -170,7 +227,12 @@ module.exports = class ChessGame {
                             [-1, 1].includes(prev - ((i + val * cases) % 8)) ||
                             Math.abs(val) == 8
                         )
-                            this.addIfIsEnemy(moves, i, i + val * cases);
+                            this.addIfIsEnemy(
+                                game_pos,
+                                moves,
+                                i,
+                                i + val * cases
+                            );
                     });
                     break;
                 case "q":
@@ -180,7 +242,12 @@ module.exports = class ChessGame {
                         while (
                             ([-1, 1].includes(prev - ((i + val * cases) % 8)) ||
                                 Math.abs(val) == 8) &&
-                            this.addIfIsEmpty(moves, i, i + val * cases)
+                            this.addIfIsEmpty(
+                                game_pos,
+                                moves,
+                                i,
+                                i + val * cases
+                            )
                         ) {
                             prev = (i + val * cases) % 8;
                             cases++;
@@ -189,12 +256,17 @@ module.exports = class ChessGame {
                             [-1, 1].includes(prev - ((i + val * cases) % 8)) ||
                             Math.abs(val) == 8
                         )
-                            this.addIfIsEnemy(moves, i, i + val * cases);
+                            this.addIfIsEnemy(
+                                game_pos,
+                                moves,
+                                i,
+                                i + val * cases
+                            );
                     });
                     break;
                 case "k":
                     [-9, -8, -7, -1, 1, 7, 8, 9].forEach((val) => {
-                        this.addMove(moves, i, i + val);
+                        this.addMove(game_pos, moves, i, i + val);
                     });
                     // Castling.
                     // WIP.
@@ -206,20 +278,29 @@ module.exports = class ChessGame {
         return moves;
     }
 
-    getValidMoves() {
-        if (this._valid_moves.length > 0) return this._valid_moves;
-        let allMoves = this.getAllMoves();
+    getValidMoves(game_pos = this.pos) {
+        if (game_pos == this.pos && this._valid_moves.length > 0)
+            return this._valid_moves;
+        let allMoves = this.getAllMoves(game_pos);
         let validMoves = [];
         allMoves.forEach((move) => {
             // Check for specific situations (e.g. checks).
-            // WIP.
-            validMoves.push(move);
+            let next_move_board = this.copy();
+            next_move_board.registerMove(move, true);
+            let eat_king = false;
+            next_move_board.getAllMoves().forEach((m) => {
+                if (next_move_board.pos.charAt(m[1]).toLowerCase() == "k")
+                    eat_king = true;
+            });
+            if (!eat_king) validMoves.push(move);
         });
-        this._valid_moves = validMoves;
+        if (game_pos == this.pos) this._valid_moves = validMoves;
+        // If no valid moves, then checkmate.
+        // WIP.
         return validMoves;
     }
 
-    registerMove(move) {
+    registerMove(move, future = false) {
         let need_reload = false;
         function replaceAt(str, index, replacement) {
             let out = "";
@@ -230,11 +311,14 @@ module.exports = class ChessGame {
             return out;
         }
 
-        let v_moves = this.getValidMoves();
-        let isValid = false;
-        v_moves.forEach((val) => {
-            if (val[0] == move[0] && val[1] == move[1]) isValid = true;
-        });
+        let isValid = false || future;
+        let v_moves = [];
+        if (!future) {
+            v_moves = this.getValidMoves();
+            v_moves.forEach((val) => {
+                if (val[0] == move[0] && val[1] == move[1]) isValid = true;
+            });
+        }
         if (!isValid) return true;
         let piece = this.pos.charAt(move[0]);
         // En passant.
@@ -268,11 +352,11 @@ module.exports = class ChessGame {
         return need_reload;
     }
 
-    evalPos = function () {
+    evalPos(game_pos = this.pos) {
         let val = 0;
-        for (var i = 0; i < this.pos.length; i++) {
-            val += CHAR_VAL[this.pos.charAt(i)];
+        for (var i = 0; i < game_pos.length; i++) {
+            val += CHAR_VAL[game_pos.charAt(i)];
         }
         return val;
-    };
+    }
 };

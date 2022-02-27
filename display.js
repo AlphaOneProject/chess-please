@@ -4,6 +4,7 @@ var path = require("path");
 
 const ChessGame = require("./board.js");
 
+const DNS_NAME = "http://localhost:8080";
 const MIME = {
     html: "text/html",
     txt: "text/plain",
@@ -45,9 +46,8 @@ function getHtmlFromPos(pos, board_only = false) {
             html += "<div class='cell " + color + "'></div>";
             continue;
         }
+        html += "<div class='cell " + color;
         html +=
-            "<div class='cell " +
-            color +
             "'><img draggable='false' src='" +
             IMG_PATH +
             CHAR_TO_IMG[pos.charAt(i)] +
@@ -61,6 +61,18 @@ function getHtmlFromPos(pos, board_only = false) {
     return html;
 }
 
+function genId(length = 8) {
+    var result = "";
+    const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (var i = 0; i < length; i++) {
+        result += characters.charAt(
+            Math.floor(Math.random() * characters.length)
+        );
+    }
+    return result;
+}
+
 const requestListener = function (req, res) {
     function notFound() {
         res.setHeader("Content-Type", "text/plain");
@@ -71,19 +83,43 @@ const requestListener = function (req, res) {
     let url = req.url;
     if (url.split("?")[0] == "/") {
         if (!req.url.toString().includes("id=")) {
+            let new_p1_id = genId();
+            let new_p2_id = genId();
+            let is_white = Math.random() > 0.5;
+            let new_game_id = genId();
+            games[new_game_id] = new ChessGame();
+            players[new_p1_id] = [new_game_id, is_white];
+            players[new_p2_id] = [new_game_id, !is_white];
+            console.log("New player: " + DNS_NAME + "/?id=" + new_p1_id);
+            console.log("New player: " + DNS_NAME + "/?id=" + new_p2_id);
+            res.writeHead(302, {
+                location: DNS_NAME + "/?id=" + new_p1_id,
+            });
+            res.end();
             return;
         }
         let id = req.url.toString().split("id=")[1].split("&")[0];
+        if (!players[id]) {
+            res.writeHead(302, {
+                location: DNS_NAME,
+            });
+            res.end();
+            return;
+        }
         res.writeHead(200);
-        if (!games[id]) games[id] = new ChessGame();
-        res.write(getHtmlFromPos(games[id].pos));
+        res.write(getHtmlFromPos(games[players[id][0]].pos));
         res.end();
+        console.log("[" + id + "] Loaded");
     } else if (url.startsWith("/api")) {
         let id = req.url.toString().split("id=")[1].split("&")[0];
+        if (!players[id]) {
+            notFound();
+            return;
+        }
         let action = req.url.toString().split("action=")[1].split("&")[0];
         if (action == "getMoves") {
             res.setHeader("Content-Type", "text/plain");
-            let moves = games[id].getValidMoves().join(";");
+            let moves = games[players[id][0]].getValidMoves().join(";");
             res.end(moves);
         } else if (action == "sendMove") {
             let move = req.url
@@ -92,10 +128,11 @@ const requestListener = function (req, res) {
                 .split("&")[0]
                 .split(",");
             move = [parseInt(move[0]), parseInt(move[1])];
-            let result = games[id].registerMove(move);
-            console.log("Moved: " + move + " (" + result + ")");
+            let result = games[players[id][0]].registerMove(move);
+            console.log("[" + id + "] Moved: " + move);
             res.writeHead(200);
-            if (result) res.end(getHtmlFromPos(games[id].pos, true));
+            if (result)
+                res.end(getHtmlFromPos(games[players[id][0]].pos, true));
             else res.end("0");
         } else notFound();
     } else if (
@@ -130,5 +167,6 @@ const requestListener = function (req, res) {
 };
 
 var games = {};
+var players = {};
 const server = http.createServer(requestListener);
 server.listen(8080);

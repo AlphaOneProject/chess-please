@@ -41,7 +41,7 @@
     background-color: #512aaa;
 }
 
-.cell.possible::before {
+.cell.possible:empty::before {
     content: "";
     position: absolute;
     width: 12px;
@@ -50,6 +50,12 @@
     border: 4px solid transparent;
     background-color: white;
     opacity: 0.5;
+}
+
+.cell.possible img {
+    border-radius: 8px;
+    background-color: red;
+    background-clip: content-box;
 }
 
 .cell img {
