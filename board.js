@@ -37,7 +37,10 @@ module.exports = class ChessGame {
         this.moves_played = [];
         this.white_to_play = true;
         this.direction = 1;
-        this.castling = { white: [true, true], black: [true, true] };
+        this.castling = [
+            [true, true],
+            [true, true],
+        ];
         this._valid_moves = [];
     }
 
@@ -269,7 +272,17 @@ module.exports = class ChessGame {
                         this.addMove(game_pos, moves, i, i + val);
                     });
                     // Castling.
-                    // WIP.
+                    if (
+                        this.castling[this.white_to_play ? 0 : 1][0] &&
+                        game_pos.charAt(i + 1) == "-"
+                    )
+                        this.addIfIsEmpty(game_pos, moves, i, i + 2);
+                    if (
+                        this.castling[this.white_to_play ? 0 : 1][1] &&
+                        game_pos.charAt(i - 1) == "-" &&
+                        game_pos.charAt(i - 3) == "-"
+                    )
+                        this.addIfIsEmpty(game_pos, moves, i, i - 2);
                     break;
                 default:
                     break;
@@ -295,7 +308,7 @@ module.exports = class ChessGame {
             if (!eat_king) validMoves.push(move);
         });
         if (game_pos == this.pos) this._valid_moves = validMoves;
-        // If no valid moves, then checkmate.
+        // If no valid moves, then game result is null or checkmate, depending if the king is in check.
         // WIP.
         return validMoves;
     }
@@ -340,7 +353,39 @@ module.exports = class ChessGame {
             }
         }
         // Castling.
-        // WIP.
+        if (piece.toLowerCase() == "r") {
+            if (move[0] % 8 == 7)
+                this.castling[this.white_to_play ? 0 : 1][0] = false;
+            if (move[0] % 8 == 0)
+                this.castling[this.white_to_play ? 0 : 1][1] = false;
+        }
+        if (this.pos.charAt(move[1]).toLowerCase() == "r") {
+            if (move[1] % 8 == 7)
+                this.castling[!this.white_to_play ? 0 : 1][0] = false;
+            if (move[1] % 8 == 0)
+                this.castling[!this.white_to_play ? 0 : 1][1] = false;
+        }
+        if (piece.toLowerCase() == "k") {
+            this.castling[this.white_to_play ? 0 : 1] = [false, false];
+            if (move[0] - move[1] == 2) {
+                this.pos = replaceAt(this.pos, move[1] - 2, "-");
+                this.pos = replaceAt(
+                    this.pos,
+                    move[1] + 1,
+                    this.white_to_play ? "R" : "r"
+                );
+                need_reload = true;
+            }
+            if (move[0] - move[1] == -2) {
+                this.pos = replaceAt(this.pos, move[1] + 1, "-");
+                this.pos = replaceAt(
+                    this.pos,
+                    move[1] - 1,
+                    this.white_to_play ? "R" : "r"
+                );
+                need_reload = true;
+            }
+        }
         // Move the piece.
         this.pos = replaceAt(this.pos, move[0], "-");
         this.pos = replaceAt(this.pos, move[1], piece);
