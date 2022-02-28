@@ -29,11 +29,8 @@ const white_pieces = "PNBRQK";
 const black_pieces = white_pieces.toLowerCase();
 
 module.exports = class ChessGame {
-    next_id = 0;
     constructor() {
         this.pos = START_POS;
-        this.id = ChessGame.next_id;
-        ChessGame.next_id++;
         this.moves_played = [];
         this.white_to_play = true;
         this.direction = 1;
@@ -47,7 +44,6 @@ module.exports = class ChessGame {
     copy() {
         let copy = new ChessGame();
         copy.pos = this.pos;
-        copy.id = this.id;
         copy.moves_played = Object.assign([], this.moves_played);
         copy.white_to_play = this.white_to_play;
         copy.direction = this.direction;
@@ -109,6 +105,8 @@ module.exports = class ChessGame {
 
     getAllMoves(game_pos = this.pos) {
         let moves = [];
+        let cur_cell;
+        let new_cell;
         for (var i = 0; i < game_pos.length; i++) {
             let piece = game_pos.charAt(i);
             if (piece == "-") continue;
@@ -176,9 +174,9 @@ module.exports = class ChessGame {
                     }
                     break;
                 case "n":
-                    let cur_cell = [~~(i / 8), i % 8];
+                    cur_cell = [~~(i / 8), i % 8];
                     [-17, -15, -10, -6, 6, 10, 15, 17].forEach((val) => {
-                        let new_cell = [~~((i + val) / 8), (i + val) % 8];
+                        new_cell = [~~((i + val) / 8), (i + val) % 8];
                         if (
                             Math.abs(new_cell[0] - cur_cell[0]) +
                                 Math.abs(new_cell[1] - cur_cell[1]) ==
@@ -271,8 +269,15 @@ module.exports = class ChessGame {
                     });
                     break;
                 case "k":
+                    cur_cell = [~~(i / 8), i % 8];
                     [-9, -8, -7, -1, 1, 7, 8, 9].forEach((val) => {
-                        this.addMove(game_pos, moves, i, i + val);
+                        new_cell = [~~((i + val) / 8), (i + val) % 8];
+                        if (
+                            Math.abs(cur_cell[0] - new_cell[0]) +
+                                Math.abs(cur_cell[1] - new_cell[1]) <=
+                            2
+                        )
+                            this.addMove(game_pos, moves, i, i + val);
                     });
                     // Castling.
                     if (

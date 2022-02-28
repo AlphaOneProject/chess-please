@@ -82,26 +82,94 @@ const requestListener = function (req, res) {
 
     let url = req.url;
     if (url.split("?")[0] == "/") {
-        if (!req.url.toString().includes("id=")) {
-            let new_p1_id = genId();
-            let new_p2_id = genId();
-            let is_white = Math.random() > 0.5;
-            let new_game_id = genId();
-            games[new_game_id] = new ChessGame();
-            players[new_p1_id] = [new_game_id, is_white];
-            players[new_p2_id] = [new_game_id, !is_white];
-            console.log("New player: " + DNS_NAME + "/?id=" + new_p1_id);
-            console.log("New player: " + DNS_NAME + "/?id=" + new_p2_id);
+        res.writeHead(200);
+        res.write(fs.readFileSync("./html/home.html"));
+        res.end();
+    } else if (url.split("?")[0] == "/new-game") {
+        res.writeHead(200);
+        res.write(fs.readFileSync("./html/new-game.html"));
+        res.end();
+    } else if (url.split("?")[0] == "/new-game/sp") {
+        let new_player_id = genId();
+        let new_game_id = genId();
+        games[new_game_id] = new ChessGame();
+        players[new_player_id] = [new_game_id, null];
+        console.log(
+            "New (single) player: " + DNS_NAME + "/game?id=" + new_player_id
+        );
+        res.writeHead(302, {
+            location: DNS_NAME + "/game?id=" + new_player_id,
+        });
+        res.end();
+        return;
+    } else if (url.split("?")[0] == "/new-game/pvp") {
+        if (games_to_fill.length > 0) {
             res.writeHead(302, {
-                location: DNS_NAME + "/?id=" + new_p1_id,
+                location: games_to_fill.pop(),
             });
             res.end();
             return;
         }
-        let id = req.url.toString().split("id=")[1].split("&")[0];
+        let new_p1_id = genId();
+        let new_p2_id = genId();
+        let is_white = Math.random() > 0.5;
+        let new_game_id = genId();
+        games[new_game_id] = new ChessGame();
+        players[new_p1_id] = [new_game_id, is_white];
+        players[new_p2_id] = [new_game_id, !is_white];
+        console.log("New player: " + DNS_NAME + "/game?id=" + new_p1_id);
+        console.log("New player: " + DNS_NAME + "/game?id=" + new_p2_id);
+        res.writeHead(302, {
+            location: DNS_NAME + "/game?id=" + new_p1_id,
+        });
+        res.end();
+        games_to_fill.push(DNS_NAME + "/game?id=" + new_p2_id);
+        return;
+    } else if (url.split("?")[0] == "/new-game/pvf") {
+        let new_p1_id = genId();
+        let new_p2_id = genId();
+        let is_white = Math.random() > 0.5;
+        let new_game_id = genId();
+        games[new_game_id] = new ChessGame();
+        players[new_p1_id] = [new_game_id, is_white];
+        players[new_p2_id] = [new_game_id, !is_white];
+        let l1 = DNS_NAME + "/game?id=" + new_p1_id;
+        let l2 = DNS_NAME + "/game?id=" + new_p2_id;
+        console.log("New player: " + l1);
+        console.log("New player: " + l2);
+        res.writeHead(200);
+        res.write(
+            fs
+                .readFileSync("./html/pvf.html")
+                .toString()
+                .replace(
+                    "REPLACE_WITH_LINKS",
+                    `<a class="pvf" href="` +
+                        l1 +
+                        `">` +
+                        l1 +
+                        `</a></br><a class="pvf" href="` +
+                        l2 +
+                        `">` +
+                        l2 +
+                        `</a>`
+                )
+        );
+        res.end();
+        return;
+    } else if (url.split("?")[0] == "/game") {
+        if (!req.url.toString().includes("id=")) {
+            res.writeHead(302, {
+                location: DNS_NAME + "/new-game",
+            });
+            res.end();
+            return;
+        }
+        let id = req.url.toString().split("id=")[1];
+        if (id.includes("&")) id = id.split("&")[0];
         if (!players[id]) {
             res.writeHead(302, {
-                location: DNS_NAME,
+                location: DNS_NAME + "/new-game",
             });
             res.end();
             return;
@@ -111,7 +179,8 @@ const requestListener = function (req, res) {
         res.end();
         console.log("[" + id + "] Loaded");
     } else if (url.startsWith("/api")) {
-        let id = req.url.toString().split("id=")[1].split("&")[0];
+        let id = req.url.toString().split("id=")[1];
+        if (id.includes("&")) id = id.split("&")[0];
         if (!players[id]) {
             notFound();
             return;
@@ -119,21 +188,31 @@ const requestListener = function (req, res) {
         let action = req.url.toString().split("action=")[1].split("&")[0];
         if (action == "getMoves") {
             res.setHeader("Content-Type", "text/plain");
-            let moves = games[players[id][0]].getValidMoves().join(";");
-            res.end(moves);
+            if (
+                players[id][1] === null ||
+                games[players[id][0]].white_to_play == players[id][1]
+            ) {
+                let moves = games[players[id][0]].getValidMoves().join(";");
+                res.end(moves);
+            } else res.end();
         } else if (action == "sendMove") {
-            let move = req.url
-                .toString()
-                .split("move=")[1]
-                .split("&")[0]
-                .split(",");
-            move = [parseInt(move[0]), parseInt(move[1])];
-            let result = games[players[id][0]].registerMove(move);
-            console.log("[" + id + "] Moved: " + move);
-            res.writeHead(200);
-            if (result)
-                res.end(getHtmlFromPos(games[players[id][0]].pos, true));
-            else res.end("0");
+            if (
+                players[id][1] === null ||
+                games[players[id][0]].white_to_play == players[id][1]
+            ) {
+                let move = req.url
+                    .toString()
+                    .split("move=")[1]
+                    .split("&")[0]
+                    .split(",");
+                move = [parseInt(move[0]), parseInt(move[1])];
+                let result = games[players[id][0]].registerMove(move);
+                console.log("[" + id + "] Moved: " + move);
+                res.writeHead(200);
+                if (result)
+                    res.end(getHtmlFromPos(games[players[id][0]].pos, true));
+                else res.end("0");
+            } else notFound();
         } else notFound();
     } else if (
         url.startsWith("/pieces/") ||
@@ -168,5 +247,6 @@ const requestListener = function (req, res) {
 
 var games = {};
 var players = {};
+var games_to_fill = [];
 const server = http.createServer(requestListener);
 server.listen(8080);

@@ -27,6 +27,12 @@ function getMoves(c_index = null) {
                 if (c_index === null || move[0] != c_index) return;
                 cells[move[1]].classList.add("possible");
             });
+            if (moves === [])
+                setTimeout(() => {
+                    // Should recover move played by the opponent.
+                    // WIP.
+                    getMoves();
+                }, 250);
             return;
         }
     };
