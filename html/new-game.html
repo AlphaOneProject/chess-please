@@ -6,17 +6,20 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="../css/global.css" />
-    <script src="../js/new-game.js" defer></script>
     <title>Échecs</title>
 </head>
 
 <body>
-    <h1>Nouvelle partie</h1>
+    <div id="bg"></div>
     <div id="panel">
-        <a class="play-btn" href="/new-game/sp">Jouer à deux sur la même machine</a>
-        <a class="play-btn" href="/new-game/pvp">Jouer en ligne (partie publique)</a>
-        <a class="play-btn" href="/new-game/pvf">Jouer en ligne (partie privée)</a>
+        <h1>Nouvelle partie</h1>
+        <div class="links">
+            <a class="play-btn" href="/new-game/sp">Jouer sur la meme machine</a>
+            <a class="play-btn" href="/new-game/pvp">Partie publique en ligne</a>
+            <a class="play-btn" href="/new-game/pvf">Partie privee en ligne</a>
+        </div>
     </div>
+    <script src="../js/new-game.js" defer></script>
 </body>
 
 </html>

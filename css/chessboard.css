@@ -1,4 +1,4 @@
-#panel {
+#interface {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -10,18 +10,19 @@
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    max-height: 512px;
+    max-height: 90vh;
     max-width: 512px;
     padding: 10px;
     background-color: black;
+    aspect-ratio: 1/1;
 }
 
 .cell {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
+    width: 12.5%;
+    height: 12.5%;
     flex: 1 1 12.5%;
 }
 

@@ -4,7 +4,7 @@ var path = require("path");
 
 const ChessGame = require("./board.js");
 
-const DNS_NAME = "http://localhost:8080";
+const DNS_NAME = "https://chess.antoine-felix.fr";
 const MIME = {
     html: "text/html",
     txt: "text/plain",
@@ -15,7 +15,7 @@ const MIME = {
     svg: "image/svg+xml",
     js: "application/javascript",
 };
-const IMG_PATH = "pieces/";
+const IMG_PATH = "images/pieces/";
 const CHAR_TO_IMG = {
     P: "p0",
     N: "n0",
@@ -144,15 +144,11 @@ const requestListener = function (req, res) {
                 .toString()
                 .replace(
                     "REPLACE_WITH_LINKS",
-                    `<a class="pvf" href="` +
+                    `<a class="play-btn" href="` +
                         l1 +
-                        `">` +
-                        l1 +
-                        `</a></br><a class="pvf" href="` +
+                        `">Lien joueur 1</a><a class="play-btn" href="` +
                         l2 +
-                        `">` +
-                        l2 +
-                        `</a>`
+                        `">Lien joueur 2</a>`
                 )
         );
         res.end();
@@ -215,7 +211,8 @@ const requestListener = function (req, res) {
             } else notFound();
         } else notFound();
     } else if (
-        url.startsWith("/pieces/") ||
+        url.startsWith("/fonts/") ||
+        url.startsWith("/images/") ||
         url.startsWith("/css/") ||
         url.startsWith("/js/")
     ) {
@@ -249,4 +246,4 @@ var games = {};
 var players = {};
 var games_to_fill = [];
 const server = http.createServer(requestListener);
-server.listen(8080);
+server.listen(4042);
