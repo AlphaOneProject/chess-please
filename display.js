@@ -190,7 +190,7 @@ const requestListener = function (req, res) {
             ) {
                 let moves = games[players[id][0]].getValidMoves().join(";");
                 res.end(moves);
-            } else res.end();
+            } else res.end("Not your turn");
         } else if (action == "sendMove") {
             if (
                 players[id][1] === null ||
@@ -209,6 +209,14 @@ const requestListener = function (req, res) {
                     res.end(getHtmlFromPos(games[players[id][0]].pos, true));
                 else res.end("0");
             } else notFound();
+        } else if (action == "keepAlive") {
+            if (players[id][1] === games[players[id][0]].white_to_play) {
+                res.writeHead(200);
+                res.end(getHtmlFromPos(games[players[id][0]].pos, true));
+            } else {
+                res.writeHead(200);
+                res.end("0");
+            }
         } else notFound();
     } else if (
         url.startsWith("/fonts/") ||

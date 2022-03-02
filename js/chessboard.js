@@ -3,6 +3,31 @@ var selected_index = -1;
 var moves = [];
 var board = null;
 var cells = null;
+var isSync = true;
+
+function keepAlive() {
+    if (isSync) return;
+    var url = "api" + window.location.search + "&action=keepAlive";
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url);
+    xhr.onreadystatechange = function () {
+        // Tries to recover the move played by the opponent.
+        if (xhr.responseText != 0 && !isSync) {
+            board.innerHTML = xhr.responseText;
+            cells = document.querySelectorAll(".cell");
+            cells.forEach(function (cell) {
+                cell.addEventListener("click", handleClick);
+            });
+            isSync = true;
+            getMoves();
+        }
+        return;
+    };
+    xhr.send();
+    setTimeout(() => {
+        keepAlive();
+    }, 1000);
+}
 
 function getMoves(c_index = null) {
     if (moves.length > 0) {
@@ -20,19 +45,18 @@ function getMoves(c_index = null) {
     xhr.open("GET", url);
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
-            tmp = xhr.responseText.split(";");
-            tmp.forEach((val) => {
-                let move = val.split(",");
-                moves.push(move);
-                if (c_index === null || move[0] != c_index) return;
-                cells[move[1]].classList.add("possible");
-            });
-            if (moves === [])
-                setTimeout(() => {
-                    // Should recover move played by the opponent.
-                    // WIP.
-                    getMoves();
-                }, 250);
+            if (xhr.responseText !== "Not your turn") {
+                tmp = xhr.responseText.split(";");
+                tmp.forEach((val) => {
+                    let move = val.split(",");
+                    moves.push(move);
+                    if (c_index === null || move[0] != c_index) return;
+                    cells[move[1]].classList.add("possible");
+                });
+            } else {
+                isSync = false;
+                keepAlive();
+            }
             return;
         }
     };
@@ -83,12 +107,12 @@ function handleClick() {
                         cell.addEventListener("click", handleClick);
                     });
                 }
+                moves.length = 0;
                 getMoves();
                 return;
             }
         };
         xhr.send();
-        moves = [];
         return;
     }
 
